@@ -19,9 +19,23 @@ app.get("/", function (req, res) {
 });
 
 
-// your first API endpoint... 
-app.get("/api/hello", function (req, res) {
-  res.json({greeting: 'hello API'});
+/*
+ * API endpoint 
+ */
+const formatDateToJSON = (date) => ({ "unix": date.getTime(), "utc" : date.toUTCString() }); 
+const checkIsDate = (date) => date.toUTCString() !== "Invalid Date";
+app.get("/api/timestamp/", (req,res) => {
+  // no user time string -> create new time
+  res.send(formatDateToJSON(new Date()));
+});
+app.get("/api/timestamp/:date_string", function (req, res) {
+  let userInput = req.params.date_string;
+  let userDate = new Date(userInput);
+  // if not a valid date -> could be UNIX date -> try again with input converted to integer
+  if(!checkIsDate(userDate)) userDate = new Date(parseInt(userInput));  
+  
+  if (!checkIsDate(userDate)) return res.send({"error" : "Invalid Date" });  
+  res.send(formatDateToJSON(userDate)); 
 });
 
 
