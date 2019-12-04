@@ -20,28 +20,31 @@ app.get('/', function (req, res) {
 
 const multer  = require('multer')
 const storage = multer.memoryStorage()
-const upload = multer({ storage: storage });
-app.route('/api/fileanalyse').post(upload.single('upfile'), (req, res) => {
-  let name = req.file.originalname,
-      size = req.file.size,
-      type = req.file.mimetype;
-  res.send({"name": name,"type": type,"size": size});
-  console.log('file uploaded:')
-  console.log(req.file);
-});
-
-// check for errors
-app.post('/api/fileanalyse', function (req, res) {
-  upload(req, res, function (err) {
-    if (err instanceof multer.MulterError) {
-      res.send('A Multer error occurred when uploading.')
-    } else if (err) {
-      res.send('An unknown error occurred when uploading.')
-    }
- 
+const upload = multer({ 
+  storage: storage,
+  limits: {fileSize: 10000000, files: 1}, // limit file size to 10 MB
+}).single('upfile');
+app.route('/api/fileanalyse').post((req, res) => {
+  upload(req, res, err => {
+    // check for errors
+    if (err) {
+      console.log(err);
+      if (err instanceof multer.MulterError) {
+        return res.send('A Multer error occurred when uploading. --> ' + err);
+      } else if (err) {
+        return res.send('An unknown error occurred when uploading. --> ' + err);
+      }
+    } 
+    
     // Everything went fine.
-  })
-})
+    let name = req.file.originalname,
+    size = req.file.size,
+    type = req.file.mimetype;
+    res.send({"name": name,"type": type,"size": size});
+    console.log('file uploaded:')
+    console.log(req.file);    
+  });
+});
 
 
 app.listen(process.env.PORT || 3000, function () {
